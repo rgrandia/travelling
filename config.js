@@ -4,5 +4,5 @@
 // Si es deixen buits, la web funciona en MODE DEMO (dades només al teu navegador).
 window.APP_CONFIG = {
   SUPABASE_URL: "https://qhgoosctiiexgghbuqon.supabase.co",
-  SUPABASE_ANON_KEY: "",
+  SUPABASE_ANON_KEY: "sb_publishable_9vWAXGbgAzzL3bJ-VVR2kg_AoWq3s5r",
 };
