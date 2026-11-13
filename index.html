@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>30 abans dels 30</title>
+  <meta name="description" content="Repte de grup: visitar 30 països abans de fer 30 anys.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <a href="#" class="brand"><span class="brand-num">30</span> abans dels <span class="brand-num">30</span></a>
+    <nav>
+      <a href="#" data-nav="home">Rànquing</a>
+      <a href="#mapa" data-nav="map">Mapa del grup</a>
+    </nav>
+  </header>
+
+  <div id="demo-banner" class="banner" hidden>
+    Mode demo: Supabase no està configurat i les dades només es guarden en aquest navegador.
+  </div>
+
+  <main id="app" aria-live="polite">
+    <p class="muted">Carregant…</p>
+  </main>
+
+  <footer class="foot">
+    <p>Compten els 250 països i territoris de la llista ISO 3166-1. Un país només compta si s'hi ha anat <strong>abans</strong> del 30è aniversari (els viatges sense data compten, però es marquen).</p>
+  </footer>
+
+  <template id="tpl-home">
+    <section class="hero">
+      <h1>Qui arribarà a <em>30 països</em> abans dels <em>30 anys</em>?</h1>
+      <div class="group-stats" id="group-stats"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Rànquing</h2>
+        <details class="legend">
+          <summary>Com s'ordena?</summary>
+          <p>Primer qui ja ho ha aconseguit (com més jove, millor). Després, qui encara hi és a temps, ordenat pel <strong>ritme que necessita</strong>: països que li falten ÷ anys que li queden. Com menys ritme necessiti, més amunt. Al final, qui ja ha fet 30 sense arribar-hi.</p>
+          <ul class="legend-list">
+            <li><span class="pill ok">Aconseguit</span> 30 o més abans dels 30</li>
+            <li><span class="pill good">Bon ritme</span> necessita ≤ 2 països/any</li>
+            <li><span class="pill warn">Cal accelerar</span> entre 2 i 5 països/any</li>
+            <li><span class="pill bad">En risc</span> més de 5 països/any</li>
+            <li><span class="pill out">Fora de termini</span> ja té 30 anys</li>
+          </ul>
+          <p class="muted">Els llindars (2 i 5) són arbitraris; es poden canviar.</p>
+        </details>
+      </div>
+      <ol class="ranking" id="ranking"></ol>
+    </section>
+
+    <section class="card">
+      <h2>Apunta't</h2>
+      <form id="form-person" class="form-row">
+        <label>Nom <input name="name" required maxlength="60" autocomplete="off" placeholder="El teu nom"></label>
+        <label>Data de naixement <input name="birthdate" type="date" required></label>
+        <button type="submit" class="btn primary">Afegir</button>
+      </form>
+    </section>
+  </template>
+
+  <template id="tpl-person">
+    <a href="#" class="back">← Rànquing</a>
+    <section class="person-head">
+      <div>
+        <h1 id="p-name"></h1>
+        <p class="muted" id="p-sub"></p>
+      </div>
+      <div class="big-count"><span id="p-count"></span><small>/30</small></div>
+    </section>
+    <div class="progress"><div class="progress-bar" id="p-bar"></div></div>
+    <div class="stats" id="p-stats"></div>
+
+    <section class="card">
+      <h2>Afegeix un país</h2>
+      <form id="form-visit" class="form-row">
+        <label class="grow">País
+          <input name="country" list="country-list" required autocomplete="off" placeholder="Escriu per cercar…">
+        </label>
+        <label>Data (opcional) <input name="visited_on" type="date"></label>
+        <button type="submit" class="btn primary">Afegir</button>
+      </form>
+      <datalist id="country-list"></datalist>
+      <p class="muted small">També pots clicar el mapa per marcar o desmarcar un país.</p>
+    </section>
+
+    <section class="card map-card">
+      <div id="p-map" class="map"></div>
+    </section>
+
+    <section class="card">
+      <h2>Països visitats</h2>
+      <ul class="visits" id="p-visits"></ul>
+    </section>
+
+    <section class="card danger-zone">
+      <details>
+        <summary>Editar o eliminar participant</summary>
+        <form id="form-edit" class="form-row">
+          <label>Nom <input name="name" required maxlength="60"></label>
+          <label>Data de naixement <input name="birthdate" type="date" required></label>
+          <button type="submit" class="btn">Desar</button>
+        </form>
+        <button id="btn-delete" class="btn danger">Eliminar aquesta persona i tots els seus països</button>
+      </details>
+    </section>
+  </template>
+
+  <template id="tpl-map">
+    <section class="hero">
+      <h1>Mapa del grup</h1>
+      <p class="muted" id="g-sub"></p>
+    </section>
+    <section class="card map-card">
+      <div id="g-map" class="map"></div>
+      <div class="map-legend" id="g-legend"></div>
+    </section>
+    <section class="card">
+      <h2>Països més visitats</h2>
+      <ol class="top-countries" id="g-top"></ol>
+    </section>
+  </template>
+
+  <div id="tooltip" class="tooltip" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="config.js"></script>
+  <script src="countries.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
